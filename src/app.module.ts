@@ -3,9 +3,18 @@ import { RouterModule } from '@nestjs/core';
 import { SeoulMeariModule } from './seoulmeari/seoulmeari.module';
 import { SeoulMeariManageModule } from './seoulmeari-manage/seoulmeari-manage.module';
 import { DatabaseModule } from './common/database/database.module';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    DatabaseModule,
+
     SeoulMeariModule,
     SeoulMeariManageModule,
     DatabaseModule,
@@ -14,7 +23,7 @@ import { DatabaseModule } from './common/database/database.module';
       { path: 'manage', module: SeoulMeariManageModule },
     ]),
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}

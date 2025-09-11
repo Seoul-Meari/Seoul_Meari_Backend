@@ -4,6 +4,6 @@ import { EchoService } from './echo.service';
 
 @Module({
   controllers: [EchoController],
-  providers: [EchoService]
+  providers: [EchoService],
 })
 export class EchoModule {}
