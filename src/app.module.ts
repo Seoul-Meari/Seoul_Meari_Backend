@@ -6,9 +6,6 @@ import { DatabaseModule } from './common/database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 
-console.log('DATABASE NAME FROM ENV:', process.env.DB_DATABASE);
-console.log('DATABASE USER FROM ENV:', process.env.DB_USERNAME);
-
 @Module({
   imports: [
     // 1. ConfigModule을 전역으로 설정하는 것은 그대로 유지합니다.
