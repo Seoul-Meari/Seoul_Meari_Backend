@@ -9,6 +9,7 @@ export class AppController {
   @Get('health')
   @HttpCode(HttpStatus.OK)
   healthCheck() {
+    console.log('health check');
     return { status: 'ok', message: 'Server is up and running' };
   }
 }
