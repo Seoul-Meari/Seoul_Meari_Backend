@@ -8,5 +8,5 @@ export class LocationDto {
   longitude: number;
 
   @IsNumber()
-  z: number; // C#의 float? 는 TypeScript의 number? 로 표현
+  z: number;
 }
