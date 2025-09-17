@@ -17,6 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/../../**/*.entity.{js,ts}'],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        ssl: true,
       }),
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.
       inject: [ConfigService],
