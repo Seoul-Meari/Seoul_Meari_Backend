@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import * as fs from 'fs';
 
 @Module({
   imports: [
@@ -17,7 +18,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/../../**/*.entity.{js,ts}'],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
-        ssl: true,
+        ssl: {
+          rejectUnauthorized: true,
+          ca: fs
+            .readFileSync('/home/ec2-user/certs/global-bundle.pem')
+            .toString(),
+        },
       }),
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.
       inject: [ConfigService],
