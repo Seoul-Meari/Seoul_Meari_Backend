@@ -3,6 +3,7 @@ import { LocationDto } from './location.dto';
 import {
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -19,6 +20,10 @@ export class CreateEchoDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @IsString()
+  @IsOptional()
+  imageKey?: string;
 
   @IsString()
   @IsNotEmpty()
