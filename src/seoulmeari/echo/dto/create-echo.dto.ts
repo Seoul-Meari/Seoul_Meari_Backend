@@ -23,7 +23,7 @@ export class CreateEchoDto {
 
   @IsString()
   @IsOptional()
-  imageKey?: string;
+  imageKey: string;
 
   @IsString()
   @IsNotEmpty()

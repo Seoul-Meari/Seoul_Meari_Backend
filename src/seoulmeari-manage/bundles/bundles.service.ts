@@ -29,16 +29,17 @@ export class BundlesService {
     private readonly sessionRepository: Repository<UploadSession>,
     private readonly configService: ConfigService,
   ) {
-    // ✨ 변경된 부분: S3Client 생성 시 액세스 키를 명시적으로 전달
+
     this.s3Client = new S3Client({
       region: this.configService.getOrThrow<string>('AWS_REGION'),
       credentials: {
         accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
+        secretAccessKey: this.configService.getOrThrow<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
       },
     });
-    this.bucketName =
-      this.configService.getOrThrow<string>('AWS_S3_BUCKET_NAME');
+    this.bucketName = this.configService.getOrThrow<string>('S3_BUCKET_NAME');
   }
 
   async initiateUpload(

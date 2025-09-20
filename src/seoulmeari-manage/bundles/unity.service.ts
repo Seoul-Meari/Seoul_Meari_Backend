@@ -14,7 +14,7 @@ export class UnityService {
     private readonly bundleRepository: Repository<Bundle>,
     private readonly configService: ConfigService,
   ) {
-    this.cdnUrl = this.configService.getOrThrow<string>('ASSET_CDN_URL');
+    this.cdnUrl = this.configService.getOrThrow<string>('BUCKET_URL');
   }
 
   async getBundleMetadata(name: string, version: string) {

@@ -19,7 +19,7 @@ export class Echo {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ name: 'image_key', type: 'varchar', length: 255, nullable: true })
   imageKey: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'varchar', length: 100 })
