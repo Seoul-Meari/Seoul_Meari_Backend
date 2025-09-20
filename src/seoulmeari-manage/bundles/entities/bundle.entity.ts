@@ -1,4 +1,3 @@
-// src/bundles/entities/bundle.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -10,22 +9,19 @@ import {
   Index,
 } from 'typeorm';
 import { UploadSession } from './upload-session.entity';
+import { Point } from 'geojson';
 
-// Re-using types from your frontend for consistency
 export type AssetUsage = 'historical' | 'promo' | 'both';
 export type AssetOS = 'android' | 'ios';
 
 @Entity('bundles')
-@Index(['name', 'version'], { unique: true }) // Ensure no duplicate name/version pairs
+@Index(['name', 'version'], { unique: true }) // 필요 시 os까지 포함: ['name','version','os']
 export class Bundle {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  name: string;
-
-  @Column()
-  version: string;
+  @Column() name: string;
+  @Column() version: string;
 
   @Column({ type: 'enum', enum: ['historical', 'promo', 'both'] })
   usage: AssetUsage;
@@ -39,21 +35,23 @@ export class Bundle {
   @Column('text', { nullable: true })
   description: string;
 
-  // The parsed content of layoutFile is stored here
   @Column('jsonb', { name: 'layout_json' })
   layoutJson: object;
 
-  // Geographic coordinates
-  @Column('double precision')
-  latitude: number;
+  // PostGIS: geography(Point,4326)  — 좌표는 [lon, lat] 순서
+  @Index({ spatial: true })
+  @Column({
+    type: 'geography',
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    name: 'location',
+  })
+  location: Point;
 
-  @Column('double precision')
-  longitude: number;
-
+  // 고도(미터)
   @Column('double precision', { nullable: true })
-  height: number;
+  height: number | null;
 
-  // Link to the upload session that created this bundle
   @OneToOne(() => UploadSession)
   @JoinColumn({ name: 'upload_session_id' })
   uploadSession: UploadSession;

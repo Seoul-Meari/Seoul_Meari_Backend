@@ -1,33 +1,24 @@
-// src/bundles/entities/upload-session.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
-
-export enum UploadStatus {
-  PENDING = 'pending',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
+import { UploadStatus } from '../enums/upload-status.enum';
 
 @Entity('upload_sessions')
+@Index(['id'], { unique: true })
 export class UploadSession {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: UploadStatus,
-    default: UploadStatus.PENDING,
-  })
+  @Column({ type: 'enum', enum: UploadStatus, default: UploadStatus.PENDING })
   status: UploadStatus;
 
-  // The prefix in S3 where the files are stored, e.g., "bundles/uploads/{sessionId}"
-  @Column({ name: 's3_prefix' })
-  s3Prefix: string;
+  @Column({ type: 'timestamptz', name: 'completed_at', nullable: true })
+  completedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
