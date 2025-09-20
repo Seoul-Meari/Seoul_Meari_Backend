@@ -18,12 +18,12 @@ import * as fs from 'fs';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/../../**/*.entity.{js,ts}'],
         synchronize: configService.get<string>('NODE_ENV') !== 'production',
-        ssl: {
-          rejectUnauthorized: true,
-          ca: fs
-            .readFileSync('/home/ec2-user/certs/global-bundle.pem')
-            .toString(),
-        },
+        // ssl: {
+        //   rejectUnauthorized: true,
+        //   ca: fs
+        //     .readFileSync('/home/ec2-user/certs/global-bundle.pem')
+        //     .toString(),
+        // },
       }),
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.
       inject: [ConfigService],
