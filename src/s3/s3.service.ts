@@ -14,7 +14,7 @@ export class S3Service {
     this.s3 = new AWS.S3({
       region: this.configService.get<string>('AWS_REGION'),
     });
-    this.bucketName = this.configService.get<string>('S3_BUCKET_NAME');
+    this.bucketName = this.configService.get<string>('S3_BUCKET_NAME')!;
   }
 
   /**

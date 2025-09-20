@@ -30,10 +30,7 @@ import * as fs from 'fs';
                   .readFileSync('/home/ec2-user/certs/global-bundle.pem')
                   .toString(),
               }
-            : {
-                // 개발(Development) 환경: 편의성을 위해 인증서 검증만 생략
-                rejectUnauthorized: false,
-              },
+            : false,
         };
       },
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.

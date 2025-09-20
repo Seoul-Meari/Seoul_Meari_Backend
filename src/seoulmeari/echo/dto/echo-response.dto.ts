@@ -1,5 +1,5 @@
 import { LocationData } from 'src/common/types/location-data.type';
-import { Echo } from '../echo.entity';
+import { Echo } from '../entities/echo.entity';
 
 // echo-response.dto.ts
 export class EchoResponseDto {

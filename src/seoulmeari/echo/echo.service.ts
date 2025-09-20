@@ -1,20 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import * as AWS from 'aws-sdk';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateEchoDto } from './dto/create-echo.dto'; // DTO 경로는 그대로 둡니다.
 import { EchoResponseDto } from './dto/echo-response.dto';
-import { Echo } from './echo.entity';
+import { Echo } from './entities/echo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Point } from 'geojson';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EchoService {
+  private readonly s3: AWS.S3;
+  private readonly bucketName: string;
+
   constructor(
-    @InjectRepository(Echo)
-    private readonly echoRepo: Repository<Echo>,
-  ) {}
+    @InjectRepository(Echo) private readonly echoRepo: Repository<Echo>,
+    private readonly configService: ConfigService,
+  ) {
+    this.s3 = new AWS.S3({
+      region: this.configService.get<string>('AWS_REGION'),
+    });
+    this.bucketName = this.configService.get<string>('S3_BUCKET_NAME')!;
+  }
 
   async create(createEchoDto: CreateEchoDto): Promise<EchoResponseDto> {
-    const { id, writer, content, createdAt, location } = createEchoDto;
+    const { id, writer, content, imageKey, createdAt, location } =
+      createEchoDto;
+
+    if (imageKey) {
+      try {
+        await this.s3
+          .headObject({ Bucket: this.bucketName, Key: imageKey })
+          .promise();
+      } catch {
+        throw new BadRequestException('imageKey not found on S3');
+      }
+    }
 
     const point: Point = {
       type: 'Point',
@@ -26,6 +47,7 @@ export class EchoService {
       id,
       writer,
       content,
+      imageKey,
       createdAt,
       location: point,
     };
