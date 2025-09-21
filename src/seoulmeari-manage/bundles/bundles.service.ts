@@ -11,10 +11,9 @@ import { Bundle } from './entities/bundle.entity';
 import { UploadStatus } from './enums/upload-status.enum';
 import { Point } from 'geojson';
 import { FinalizeUploadDto } from './dto/finalize-upload.dto';
+import { LayoutJson } from './type';
+import { GetBundlesQueryDto } from './dto/get-bundles.dto';
 
-/** ─────────────────────────────
- *  helpers: type guards
- *  ───────────────────────────── */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -29,6 +28,45 @@ function isPoint(value: unknown): value is Point {
   );
 }
 
+function isLayoutJson(obj: unknown): obj is LayoutJson {
+  if (!isRecord(obj)) return false;
+
+  const hasRequiredStrings =
+    typeof obj.name === 'string' && typeof obj.version === 'string';
+
+  const hasValidEnums =
+    ['android', 'ios'].includes(obj.os as string) &&
+    ['historical', 'promo', 'both'].includes(obj.usage as string) &&
+    ['draft', 'published', 'archived'].includes(obj.status as string);
+
+  const hasRequiredArrays =
+    Array.isArray(obj.tags) &&
+    Array.isArray(obj.prefabs) &&
+    Array.isArray(obj.placementGroups);
+
+  // Deeper check to ensure prefabs array has the correct inner structure
+  const hasValidPrefabs =
+    Array.isArray(obj.prefabs) &&
+    obj.prefabs.every(
+      (p) =>
+        isRecord(p) &&
+        typeof p.id === 'string' &&
+        typeof p.name === 'string' &&
+        typeof p.sizeMB === 'number' &&
+        Array.isArray(p.tags),
+    );
+
+  const hasRequiredNumber = typeof obj.totalSizeMB === 'number';
+
+  return (
+    hasRequiredStrings &&
+    hasValidEnums &&
+    hasRequiredArrays &&
+    hasValidPrefabs &&
+    hasRequiredNumber
+  );
+}
+
 @Injectable()
 export class BundlesService {
   constructor(
@@ -37,6 +75,71 @@ export class BundlesService {
     @InjectRepository(UploadSession)
     private readonly sessionRepository: Repository<UploadSession>,
   ) {}
+
+  async getBundles(queryDto: GetBundlesQueryDto) {
+    // ... (implementation unchanged)
+    const {
+      page = 1,
+      limit = 10,
+      q,
+      usage,
+      status,
+      os,
+      sortBy = 'recent',
+      sortOrder = 'DESC',
+    } = queryDto;
+
+    const query = this.bundleRepository.createQueryBuilder('bundle');
+
+    if (q) {
+      const searchQuery = `%${q}%`;
+      query.andWhere(
+        '(bundle.name ILIKE :searchQuery OR bundle.description ILIKE :searchQuery OR :q = ANY(bundle.tags))',
+        { searchQuery, q },
+      );
+    }
+
+    if (usage && usage !== 'all') {
+      query.andWhere('bundle.usage = :usage', { usage });
+    }
+    if (status && status !== 'all') {
+      query.andWhere('bundle.status = :status', { status });
+    }
+    if (os && os !== 'all') {
+      query.andWhere('bundle.os = :os', { os });
+    }
+
+    switch (sortBy) {
+      case 'name':
+        query.orderBy('bundle.name', sortOrder);
+        break;
+      case 'size':
+        query.orderBy('bundle.totalSizeMB', sortOrder);
+        break;
+      case 'recent':
+      default:
+        query.orderBy('bundle.updatedAt', sortOrder);
+        break;
+    }
+
+    const offset = (page - 1) * limit;
+    query.skip(offset).take(limit);
+
+    const [data, total] = await query.getManyAndCount();
+
+    const bundles = data.map(({ id, ...rest }) => ({
+      bundleId: id,
+      ...rest,
+    }));
+
+    return {
+      data: bundles,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
   async finalizeUpload(
     finalizeDto: FinalizeUploadDto,
@@ -52,10 +155,10 @@ export class BundlesService {
         'Invalid layoutFile. Must be a valid JSON.',
       );
     }
-    if (!isRecord(layoutUnknown)) {
+    if (!isLayoutJson(layoutUnknown)) {
       throw new BadRequestException('layoutFile must be a JSON object.');
     }
-    const layoutJson: Record<string, unknown> = layoutUnknown; // 안전하게 좁힘
+    const layoutJson: LayoutJson = layoutUnknown; // 안전하게 좁힘
 
     // 2) 좌표/숫자 변환
     const latitude = Number(finalizeDto.latitude);
@@ -90,7 +193,7 @@ export class BundlesService {
           `Upload session ${finalizeDto.uploadId} not found.`,
         );
       }
-      if (session.status !== UploadStatus.PENDING) {
+      if (session.status !== UploadStatus.UPLOADING) {
         throw new ConflictException(
           `Upload session ${finalizeDto.uploadId} already processed.`,
         );
@@ -126,8 +229,9 @@ export class BundlesService {
         os,
         tags,
         description: finalizeDto.description,
-        layoutJson, // ← any 아님 (Record<string, unknown>)
-        location, // ← Point 타입 확정
+        layoutJson,
+        prefabs: layoutJson.prefabs.map((p) => p.name),
+        location,
         height,
         uploadSession: session,
       });

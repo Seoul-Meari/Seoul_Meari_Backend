@@ -10,9 +10,7 @@ import {
 } from 'typeorm';
 import { UploadSession } from './upload-session.entity';
 import { Point } from 'geojson';
-
-export type AssetUsage = 'historical' | 'promo' | 'both';
-export type AssetOS = 'android' | 'ios';
+import { AssetOS, AssetUsage } from '../type';
 
 @Entity('bundles')
 @Index(['name', 'version'], { unique: true }) // 필요 시 os까지 포함: ['name','version','os']
@@ -37,6 +35,9 @@ export class Bundle {
 
   @Column('jsonb', { name: 'layout_json' })
   layoutJson: object;
+
+  @Column('text', { array: true, default: [], name: 'prefabs' })
+  prefabs: string[];
 
   // PostGIS: geography(Point,4326)  — 좌표는 [lon, lat] 순서
   @Index({ spatial: true })

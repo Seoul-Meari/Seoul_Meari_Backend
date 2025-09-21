@@ -6,13 +6,20 @@ import * as path from 'path';
 import { InitiateUploadDto } from './dto/bundle/initiate-upload.dto';
 import { InitiateUploadResponseDto } from './dto/bundle/initiate-upload-response.dto';
 import { FileUploadRequestDto } from './dto/file-upload-request.dto';
+import { UploadSession } from 'src/seoulmeari-manage/bundles/entities/upload-session.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UploadStatus } from 'src/seoulmeari-manage/bundles/enums/upload-status.enum';
 
 @Injectable()
 export class S3Service {
   private readonly s3: AWS.S3;
   private readonly bucketName: string;
-
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(UploadSession)
+    private readonly uploadRepo: Repository<UploadSession>,
+  ) {
     this.s3 = new AWS.S3({
       region: this.configService.get<string>('AWS_REGION'),
     });
@@ -76,41 +83,45 @@ export class S3Service {
   /**
    * 번들 업로드를 위한 Presigned URL을 생성합니다.
    */
+  // s3.service.ts (발췌)
   async createPresignedUrlsForBundle(
-    initiateUploadDto: InitiateUploadDto,
+    dto: InitiateUploadDto,
   ): Promise<InitiateUploadResponseDto> {
-    // 1. DTO에 맞게 uploadId를 생성합니다.
     const uploadId = uuidv4();
+    const s3Prefix = `bundles/${uploadId}/`;
 
-    const urlPromises = initiateUploadDto.files.map(async (file) => {
-      const ext = path.extname(file.fileName);
-      const base = path.basename(file.fileName, ext);
+    // 1) 세션 선 생성
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15m
+    const filesMeta = dto.files.map((f) => ({
+      fileName: f.fileName,
+      key: `${s3Prefix}${path.basename(f.fileName)}`, // 필요하면 규칙 더 엄격히
+      contentType: f.fileType,
+    }));
 
-      // S3 키는 uploadId를 사용해 그룹화할 수 있습니다.
-      const key = `bundles/${uploadId}/${base}${ext}`;
-
-      const params = {
-        Bucket: this.bucketName,
-        Key: key,
-        ContentType: file.fileType,
-        Expires: 300,
-      };
-
-      const presignedUrl = await this.s3.getSignedUrlPromise(
-        'putObject',
-        params,
-      );
-
-      // 2. DTO 구조에 맞게 원본 파일명과 생성된 URL을 반환합니다.
-      return {
-        fileName: file.fileName, // 원본 파일명
-        url: presignedUrl, // 생성된 Presigned URL
-      };
+    await this.uploadRepo.insert({
+      id: uploadId,
+      status: UploadStatus.PENDING,
+      s3Prefix,
+      files: filesMeta,
+      expiresAt,
     });
 
-    const urls = await Promise.all(urlPromises);
+    // 2) presigned URL 발급
+    const urls = await Promise.all(
+      filesMeta.map(async (file) => {
+        const presignedUrl = await this.s3.getSignedUrlPromise('putObject', {
+          Bucket: this.bucketName,
+          Key: file.key,
+          ContentType: file.contentType,
+          Expires: 300, // 5m
+        });
+        return { fileName: file.fileName, url: presignedUrl };
+      }),
+    );
 
-    // 3. 최종적으로 DTO 인터페이스 형식에 맞춰 uploadId와 urls 배열을 반환합니다.
+    // 3) 상태 전환(선택)
+    await this.uploadRepo.update(uploadId, { status: UploadStatus.UPLOADING });
+
     return { uploadId, urls };
   }
 

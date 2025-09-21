@@ -5,9 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-
-export type AssetUsage = 'historical' | 'promo' | 'both';
-export type AssetOS = 'android' | 'ios';
+import { AssetOS, AssetUsage } from '../type';
 
 export class FinalizeUploadDto {
   @IsString() uploadId: string;
