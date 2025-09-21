@@ -29,8 +29,5 @@ export class FinalizeUploadDto {
 
   @IsLongitude() longitude: string; // 문자열로 들어와서 서비스에서 Number 변환
   @IsLatitude() latitude: string;
-
-  @IsString()
-  @IsOptional()
-  height?: string; // 선택(숫자 문자열)
+  @IsString() altitude: string; // 선택(숫자 문자열)
 }

@@ -11,6 +11,7 @@ import {
 import { UploadSession } from './upload-session.entity';
 import { Point } from 'geojson';
 import { AssetOS, AssetUsage } from '../type';
+import { AssetStatus } from '../enums/asset-status.enum';
 
 @Entity('bundles')
 @Index(['name', 'version'], { unique: true }) // 필요 시 os까지 포함: ['name','version','os']
@@ -26,6 +27,9 @@ export class Bundle {
 
   @Column({ type: 'enum', enum: ['android', 'ios'] })
   os: AssetOS;
+
+  @Column({ name: 'asset_status', type: 'enum', enum: AssetStatus })
+  status: AssetStatus;
 
   @Column('text', { array: true, default: [] })
   tags: string[];
@@ -43,15 +47,11 @@ export class Bundle {
   @Index({ spatial: true })
   @Column({
     type: 'geography',
-    spatialFeatureType: 'Point',
+    spatialFeatureType: 'PointZ',
     srid: 4326,
     name: 'location',
   })
   location: Point;
-
-  // 고도(미터)
-  @Column('double precision', { nullable: true })
-  height: number | null;
 
   @OneToOne(() => UploadSession)
   @JoinColumn({ name: 'upload_session_id' })

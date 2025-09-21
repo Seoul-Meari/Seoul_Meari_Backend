@@ -13,6 +13,7 @@ import { Point } from 'geojson';
 import { FinalizeUploadDto } from './dto/finalize-upload.dto';
 import { LayoutJson } from './type';
 import { GetBundlesQueryDto } from './dto/get-bundles.dto';
+import { AssetStatus } from './enums/asset-status.enum';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -23,7 +24,7 @@ function isPoint(value: unknown): value is Point {
     isRecord(value) &&
     value.type === 'Point' &&
     Array.isArray(value.coordinates) &&
-    value.coordinates.length === 2 &&
+    value.coordinates.length === 3 &&
     value.coordinates.every((n) => typeof n === 'number')
   );
 }
@@ -36,8 +37,7 @@ function isLayoutJson(obj: unknown): obj is LayoutJson {
 
   const hasValidEnums =
     ['android', 'ios'].includes(obj.os as string) &&
-    ['historical', 'promo', 'both'].includes(obj.usage as string) &&
-    ['draft', 'published', 'archived'].includes(obj.status as string);
+    ['historical', 'promo', 'both'].includes(obj.usage as string);
 
   const hasRequiredArrays =
     Array.isArray(obj.tags) &&
@@ -77,7 +77,6 @@ export class BundlesService {
   ) {}
 
   async getBundles(queryDto: GetBundlesQueryDto) {
-    // ... (implementation unchanged)
     const {
       page = 1,
       limit = 10,
@@ -103,7 +102,7 @@ export class BundlesService {
       query.andWhere('bundle.usage = :usage', { usage });
     }
     if (status && status !== 'all') {
-      query.andWhere('bundle.status = :status', { status });
+      query.andWhere(`bundle.status = :status`, { status });
     }
     if (os && os !== 'all') {
       query.andWhere('bundle.os = :os', { os });
@@ -131,6 +130,8 @@ export class BundlesService {
       bundleId: id,
       ...rest,
     }));
+
+    console.log(bundles);
 
     return {
       data: bundles,
@@ -163,14 +164,9 @@ export class BundlesService {
     // 2) 좌표/숫자 변환
     const latitude = Number(finalizeDto.latitude);
     const longitude = Number(finalizeDto.longitude);
-    const height =
-      finalizeDto.height != null ? Number(finalizeDto.height) : null;
+    const z = Number(finalizeDto.altitude);
 
-    if (
-      Number.isNaN(latitude) ||
-      Number.isNaN(longitude) ||
-      (finalizeDto.height != null && Number.isNaN(height!))
-    ) {
+    if (Number.isNaN(latitude) || Number.isNaN(longitude) || Number.isNaN(z)) {
       throw new BadRequestException('Invalid coordinates.');
     }
 
@@ -215,7 +211,7 @@ export class BundlesService {
       // 3-4) location: 생성 값도 타입 보장
       const locationCandidate: unknown = {
         type: 'Point',
-        coordinates: [longitude, latitude],
+        coordinates: [longitude, latitude, z],
       };
       if (!isPoint(locationCandidate)) {
         throw new BadRequestException('Invalid location payload.');
@@ -227,12 +223,12 @@ export class BundlesService {
         version: finalizeDto.version,
         usage,
         os,
+        status: AssetStatus.DRAFT,
         tags,
         description: finalizeDto.description,
         layoutJson,
         prefabs: layoutJson.prefabs.map((p) => p.name),
         location,
-        height,
         uploadSession: session,
       });
 
