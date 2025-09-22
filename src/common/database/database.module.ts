@@ -24,13 +24,12 @@ import * as fs from 'fs';
           synchronize: !isProduction,
           ssl: isProduction
             ? {
-                // 운영(Production) 환경: 보안을 위해 인증서 파일을 엄격하게 검증
                 rejectUnauthorized: true,
                 ca: fs
-                  .readFileSync('/home/ec2-user/certs/global-bundle.pem')
+                  .readFileSync('/home/ec-user/certs/global-bundle.pem')
                   .toString(),
               }
-            : false,
+            : { rejectUnauthorized: false }, // 개발 환경에서 SSL 연결 허용
         };
       },
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.

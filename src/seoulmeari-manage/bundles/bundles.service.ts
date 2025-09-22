@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UploadSession } from './entities/upload-session.entity';
+import { ConfigService } from '@nestjs/config';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Express } from 'express';
+
+import { UploadSession, UploadStatus } from './entities/upload-session.entity';
 import { Bundle } from './entities/bundle.entity';
 import { UploadStatus } from './enums/upload-status.enum';
 import { Point } from 'geojson';
