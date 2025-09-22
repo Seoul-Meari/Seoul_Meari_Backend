@@ -14,7 +14,7 @@ import { EchoResponseDto } from './dto/echo-response.dto';
 export class EchoController {
   constructor(private readonly echoService: EchoService) {}
 
-  @Get('/nearby')
+  @Get('nearby')
   async getNearbyEchos(
     @Query('lat', ParseFloatPipe) latitude: number,
     @Query('lon', ParseFloatPipe) longitude: number,

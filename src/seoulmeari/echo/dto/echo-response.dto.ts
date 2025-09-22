@@ -6,6 +6,7 @@ export class EchoResponseDto {
   id: string;
   writer: string;
   content: string;
+  imageKey: string;
   createdAt: string;
   location: LocationData;
 
@@ -13,6 +14,7 @@ export class EchoResponseDto {
     this.id = entity.id;
     this.writer = entity.writer;
     this.content = entity.content;
+    this.imageKey = entity.imageKey;
     this.createdAt = entity.createdAt;
     this.location = {
       longitude: entity.location.coordinates[0],
