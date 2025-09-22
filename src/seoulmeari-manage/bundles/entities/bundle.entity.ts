@@ -1,4 +1,3 @@
-// src/bundles/entities/bundle.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -10,22 +9,18 @@ import {
   Index,
 } from 'typeorm';
 import { UploadSession } from './upload-session.entity';
-
-// Re-using types from your frontend for consistency
-export type AssetUsage = 'historical' | 'promo' | 'both';
-export type AssetOS = 'android' | 'ios';
+import { Point } from 'geojson';
+import { AssetOS, AssetUsage } from '../type';
+import { AssetStatus } from '../enums/asset-status.enum';
 
 @Entity('bundles')
-@Index(['name', 'version'], { unique: true }) // Ensure no duplicate name/version pairs
+@Index(['name', 'version'], { unique: true }) // 필요 시 os까지 포함: ['name','version','os']
 export class Bundle {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  name: string;
-
-  @Column()
-  version: string;
+  @Column() name: string;
+  @Column() version: string;
 
   @Column({ type: 'enum', enum: ['historical', 'promo', 'both'] })
   usage: AssetUsage;
@@ -33,27 +28,31 @@ export class Bundle {
   @Column({ type: 'enum', enum: ['android', 'ios'] })
   os: AssetOS;
 
+  @Column({ name: 'asset_status', type: 'enum', enum: AssetStatus })
+  status: AssetStatus;
+
   @Column('text', { array: true, default: [] })
   tags: string[];
 
   @Column('text', { nullable: true })
   description: string;
 
-  // The parsed content of layoutFile is stored here
   @Column('jsonb', { name: 'layout_json' })
   layoutJson: object;
 
-  // Geographic coordinates
-  @Column('double precision')
-  latitude: number;
+  @Column('text', { array: true, default: [], name: 'prefabs' })
+  prefabs: string[];
 
-  @Column('double precision')
-  longitude: number;
+  // PostGIS: geography(Point,4326)  — 좌표는 [lon, lat] 순서
+  @Index({ spatial: true })
+  @Column({
+    type: 'geography',
+    spatialFeatureType: 'PointZ',
+    srid: 4326,
+    name: 'location',
+  })
+  location: Point;
 
-  @Column('double precision', { nullable: true })
-  height: number;
-
-  // Link to the upload session that created this bundle
   @OneToOne(() => UploadSession)
   @JoinColumn({ name: 'upload_session_id' })
   uploadSession: UploadSession;

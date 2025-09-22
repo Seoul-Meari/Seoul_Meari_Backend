@@ -1,25 +1,17 @@
-// src/bundles/dto/finalize-upload.dto.ts
 import {
-  IsString,
-  IsNotEmpty,
-  IsUUID,
-  IsOptional,
   IsEnum,
-  IsNumberString,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  IsString,
 } from 'class-validator';
-import { AssetOS, AssetUsage } from '../entities/bundle.entity';
+import { AssetOS, AssetUsage } from '../type';
 
 export class FinalizeUploadDto {
-  @IsUUID()
-  uploadId: string;
+  @IsString() uploadId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  version: string;
+  @IsString() name: string;
+  @IsString() version: string;
 
   @IsEnum(['historical', 'promo', 'both'])
   usage: AssetUsage;
@@ -29,19 +21,13 @@ export class FinalizeUploadDto {
 
   @IsString()
   @IsOptional()
-  tags: string; // Comma-separated string
+  tags?: string; // 콤마구분 문자열
 
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 
-  @IsNumberString()
-  latitude: string;
-
-  @IsNumberString()
-  longitude: string;
-
-  @IsNumberString()
-  @IsOptional()
-  height: string;
+  @IsLongitude() longitude: string; // 문자열로 들어와서 서비스에서 Number 변환
+  @IsLatitude() latitude: string;
+  @IsString() altitude: string; // 선택(숫자 문자열)
 }

@@ -14,8 +14,6 @@ import { AppController } from './app.controller';
       envFilePath: '.env',
     }),
 
-    DatabaseModule,
-
     SeoulMeariModule,
     SeoulMeariManageModule,
     DatabaseModule,
