@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Express } from 'express';
 
 import { UploadSession, UploadStatus } from './entities/upload-session.entity';
 import { Bundle } from './entities/bundle.entity';
