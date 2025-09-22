@@ -4,8 +4,9 @@ import { MediaModule } from './media/media.module';
 import { AuthModule } from './auth/auth.module';
 import { EchoModule } from './echo/echo.module';
 import { ComplaintsModule } from './complaints/complaints.module';
+import { DocentModule } from './docent/docent.module';
 
 @Module({
-  imports: [PlacesModule, MediaModule, AuthModule, EchoModule, ComplaintsModule],
+  imports: [PlacesModule, MediaModule, AuthModule, EchoModule, ComplaintsModule, DocentModule],
 })
 export class SeoulMeariModule {}
