@@ -20,13 +20,6 @@ export class DocentService {
   }
 
   async makeAnswer(gps_data: string, img_url: string, question: string) {
-    let imageBase64: string | undefined;
-    try {
-      if (img_url) {
-        imageBase64 = await this.downloadImageAsBase64(img_url);
-      }
-    } catch (_) {}
-
     const prompt = [
       '넌 서울 여행 안내자야.',
       `질문: ${question}`,
@@ -51,7 +44,7 @@ export class DocentService {
               source: {
                 type: 'base64',
                 media_type: 'image/jpeg',
-                data: imageBase64,
+                data: img_url,
               },
             },
           ],
