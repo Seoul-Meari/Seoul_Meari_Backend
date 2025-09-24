@@ -6,6 +6,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { DocentService } from './docent.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -49,6 +50,8 @@ export class DocentController {
     @UploadedFile() img_file: Express.Multer.File,
     @Body() body: CreateDocentDto,
   ): Promise<ResponseDocentDto> {
+    if (!img_file) throw new BadRequestException('file is required');
+
     try {
       const answer: string = await this.docentService.makeAnswer(
         body.gps_data,
