@@ -95,4 +95,27 @@ export class EchoService {
     console.log(echos);
     return echos.map((echo) => new EchoResponseDto(echo));
   }
+
+  async getEchoList(){
+    return this.echoRepo.find();
+  }
+
+  async getEchoById(id: string){
+    return this.echoRepo.findOne({ where: { id: id } });
+  }
+
+  async deleteEcho(id: string): Promise<boolean> {
+    const existing = await this.echoRepo.findOne({ where: { id } });
+    if (!existing) {
+      return false;
+    }
+    // 이미지가 연결되어 있으면 S3에서도 시도 삭제 (실패해도 무시)
+    if (existing.imageKey) {
+      try {
+        await this.s3.deleteObject({ Bucket: this.bucketName, Key: existing.imageKey }).promise();
+      } catch (_) {}
+    }
+    await this.echoRepo.delete({ id });
+    return true;
+  }
 }
