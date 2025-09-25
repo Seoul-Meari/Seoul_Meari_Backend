@@ -3,6 +3,7 @@ import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from '@aws-sdk/client-bedrock-runtime';
+import * as fs from 'node:fs/promises';
 
 @Injectable()
 export class DocentService {
@@ -10,28 +11,20 @@ export class DocentService {
     region: process.env.AWS_BEDROCK_REGION,
   });
 
-  private async downloadImageAsBase64(imageUrl: string): Promise<string> {
-    const res = await fetch(imageUrl);
-    if (!res.ok) {
-      throw new Error(`Image download failed: ${res.status} ${res.statusText}`);
-    }
-    const buf = Buffer.from(await res.arrayBuffer());
-    return buf.toString('base64');
-  }
-
-  async makeAnswer(gps_data: string, img_url: string, question: string) {
-    let imageBase64: string | undefined;
-    try {
-      if (img_url) {
-        imageBase64 = await this.downloadImageAsBase64(img_url);
-      }
-    } catch (_) {}
+  async makeAnswer(
+    gps_data: string,
+    img_filePath: string,
+    img_mediaType: string,
+    question: string,
+  ): Promise<string> {
+    const img_buf = await fs.readFile(img_filePath);
+    const img_base64 = img_buf.toString('base64');
 
     const prompt = [
       '넌 서울 여행 안내자야.',
       `질문: ${question}`,
       `지도 gps: ${gps_data}`,
-      `이미지 URL: ${img_url}`,
+      `이미지: (직접 업로드됨)}`,
       '사용자가 물어본 언어를 토대로 사용자에게 해당 이미지와 지도 정보를 확인해 대답해줘.',
     ].join('\n');
 
@@ -51,7 +44,7 @@ export class DocentService {
               source: {
                 type: 'base64',
                 media_type: 'image/jpeg',
-                data: imageBase64,
+                data: img_base64,
               },
             },
           ],
