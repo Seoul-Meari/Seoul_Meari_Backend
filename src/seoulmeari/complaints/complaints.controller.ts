@@ -1,11 +1,11 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
 import { ComplaintsService } from './complaints.service';
 @Controller('complaints')
 export class ComplaintsController {
   constructor(private readonly complaintsService: ComplaintsService) {}
 
   @Get()
-  async checkConnection() {
+  checkConnection() {
     return 'Complaints API is running';
   }
 
@@ -48,5 +48,11 @@ export class ComplaintsController {
       console.error('Presigned URL 생성 중 오류:', error);
       throw error;
     }
+  }
+
+  @Patch('/complaints-list/:id/resolve')
+  async resolve(@Param('id') id: string) {
+    const complaint = await this.complaintsService.resolveComplaint(id);
+    return { success: true, complaint };
   }
 }
