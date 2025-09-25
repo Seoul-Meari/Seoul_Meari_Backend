@@ -7,10 +7,13 @@ import {
   ParseFloatPipe,
   Param,
   Delete,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { EchoService } from './echo.service';
 import { CreateEchoDto } from './dto/create-echo.dto';
 import { EchoResponseDto } from './dto/echo-response.dto';
+import { PaginateEchoDto } from './dto/paginate-echo.dto';
 
 @Controller('echo')
 export class EchoController {
@@ -32,8 +35,9 @@ export class EchoController {
   }
 
   @Get('/echo-list')
-  async getEchoList(){
-    return this.echoService.getEchoList();
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  async getEchoList(@Query() query: PaginateEchoDto) {
+    return this.echoService.getEchoList(query);
   }
 
   @Get('/echo-list/:id')
@@ -49,6 +53,4 @@ export class EchoController {
     console.log(ok);
     return ok ? { success: true } : { success: false, message: 'Not found' };
   }
-
-  
 }
