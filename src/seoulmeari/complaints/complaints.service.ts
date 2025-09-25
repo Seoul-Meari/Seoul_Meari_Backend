@@ -18,18 +18,6 @@ export class ComplaintsService {
     return this.complaintRepository.findOne({ where: { complaint_id: id } });
   }
 
-  async createPresignedUrl(S3_url: string) {
-    try {
-      console.log('S3 URL:', S3_url);
-      const presignedUrl = await this.s3Service.getPresignedUrlForView(S3_url);
-      console.log('생성된 Presigned URL:', presignedUrl);
-      return presignedUrl;
-    } catch (error) {
-      console.error('Presigned URL 생성 실패:', error);
-      throw new Error(`Presigned URL 생성 실패: ${error.message}`);
-    }
-  }
-
   async resolveComplaint(id: string) {
     const complaint = await this.complaintRepository.findOne({
       where: { complaint_id: id },

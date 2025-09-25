@@ -143,6 +143,18 @@ export class S3Service {
     return this.s3.getSignedUrlPromise('getObject', params);
   }
 
+  async createPresignedUrl(S3_url: string) {
+    try {
+      console.log('S3 URL:', S3_url);
+      const presignedUrl = await this.getPresignedUrlForView(S3_url);
+      console.log('생성된 Presigned URL:', presignedUrl);
+      return presignedUrl;
+    } catch (error) {
+      console.error('Presigned URL 생성 실패:', error);
+      throw new Error(`Presigned URL 생성 실패: ${error.message}`);
+    }
+  }
+
   /**
    * 에코 이미지 조회를 위한 Presigned URL을 생성합니다.
    */
