@@ -8,4 +8,8 @@ export class FileUploadRequestDto {
   @IsString()
   @IsNotEmpty()
   objectName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  contentType: string;
 }

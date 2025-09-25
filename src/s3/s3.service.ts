@@ -52,6 +52,7 @@ export class S3Service {
       const params = {
         Bucket: this.bucketName,
         Key: key,
+        ContentType: file.contentType,
         Expires: 300, // 5분
       };
       return this.s3
