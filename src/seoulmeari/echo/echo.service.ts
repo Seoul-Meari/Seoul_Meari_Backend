@@ -4,9 +4,10 @@ import { CreateEchoDto } from './dto/create-echo.dto'; // DTO 경로는 그대�
 import { EchoResponseDto } from './dto/echo-response.dto';
 import { Echo } from './entities/echo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Point } from 'geojson';
 import { ConfigService } from '@nestjs/config';
+import { PaginateEchoDto } from './dto/paginate-echo.dto';
 
 @Injectable()
 export class EchoService {
@@ -96,11 +97,63 @@ export class EchoService {
     return echos.map((echo) => new EchoResponseDto(echo));
   }
 
-  async getEchoList(){
-    return this.echoRepo.find();
+  async getEchoList({ page = 1, limit = 20, search = '' }: PaginateEchoDto) {
+    const qb = this.echoRepo.createQueryBuilder('e');
+
+    if (search && search.trim() !== '') {
+      const q = `%${search.trim().toLowerCase()}%`;
+      qb.andWhere(
+        new Brackets((w) => {
+          w.where('LOWER(e.content) LIKE :q', { q }).orWhere(
+            'LOWER(e.writer) LIKE :q',
+            { q },
+          );
+        }),
+      );
+    }
+
+    qb.orderBy('e.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    // 오늘(KST) 시작~현재까지 생성된 개수 계산
+    // (서버 TZ가 UTC여도 문제없도록 KST 00:00을 UTC로 변환)
+    const now = new Date();
+    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const kstStart = new Date(
+      Date.UTC(
+        kstNow.getUTCFullYear(),
+        kstNow.getUTCMonth(),
+        kstNow.getUTCDate(),
+        0,
+        0,
+        0,
+      ),
+    );
+    const utcStartOfKst = new Date(kstStart.getTime() - 9 * 60 * 60 * 1000);
+
+    const todayCount = await this.echoRepo
+      .createQueryBuilder('t')
+      .where('t.createdAt >= :start', { start: utcStartOfKst.toISOString() })
+      .getCount();
+
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        pageCount: Math.ceil(total / limit),
+        hasPrev: page > 1,
+        hasNext: page * limit < total,
+        todayCount, // 프론트 통계 카드용
+      },
+    };
   }
 
-  async getEchoById(id: string){
+  async getEchoById(id: string) {
     return this.echoRepo.findOne({ where: { id: id } });
   }
 
@@ -112,7 +165,9 @@ export class EchoService {
     // 이미지가 연결되어 있으면 S3에서도 시도 삭제 (실패해도 무시)
     if (existing.imageKey) {
       try {
-        await this.s3.deleteObject({ Bucket: this.bucketName, Key: existing.imageKey }).promise();
+        await this.s3
+          .deleteObject({ Bucket: this.bucketName, Key: existing.imageKey })
+          .promise();
       } catch (_) {}
     }
     await this.echoRepo.delete({ id });
