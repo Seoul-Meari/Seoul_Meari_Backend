@@ -53,6 +53,4 @@ export class EchoController {
     console.log(ok);
     return ok ? { success: true } : { success: false, message: 'Not found' };
   }
-
-  
 }
