@@ -112,10 +112,13 @@ export class S3Service {
     // 2) presigned URL 발급
     const urls = await Promise.all(
       filesMeta.map(async (file) => {
+        const contentTypeForSigning =
+          file.contentType || 'application/octet-stream';
+
         const presignedUrl = await this.s3.getSignedUrlPromise('putObject', {
           Bucket: this.bucketName,
           Key: file.key,
-          ContentType: file.contentType,
+          ContentType: contentTypeForSigning,
           Expires: 300, // 5m
         });
         return { fileName: file.fileName, url: presignedUrl };
