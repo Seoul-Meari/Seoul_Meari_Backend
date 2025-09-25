@@ -29,7 +29,8 @@ import * as fs from 'fs';
                   .readFileSync('/home/ec-user/certs/global-bundle.pem')
                   .toString(),
               }
-            : { rejectUnauthorized: false }, // 개발 환경에서 SSL 연결 허용
+            : // : false,
+              { rejectUnauthorized: false }, // 개발 환경에서 SSL 연결 허용
         };
       },
       // useFactory에 주입할 Provider를 inject 배열에 명시합니다.
