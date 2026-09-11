@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # NestJS App 서비스
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seoul-meari-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev
+    # db 서비스가 먼저 시작되도록 depends_on 추가
+    networks:
+      - my_network
+# 사용할 볼륨과 네트워크 정의
+volumes:
+  pgdata:
+
+networks:
+  my_network:
+    driver: bridge

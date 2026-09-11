@@ -1,14 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { EchoModule } from './echo/echo.module';
-import { MediaModule } from './media/media.module';
-import { PlacesModule } from './places/places.module';
-import { AdminModule } from './admin/admin.module';
-import { DatabaseModule } from './database/database.module';
+import { RouterModule } from '@nestjs/core';
+import { SeoulMeariModule } from './seoulmeari/seoulmeari.module';
+import { SeoulMeariManageModule } from './seoulmeari-manage/seoulmeari-manage.module';
+import { DatabaseModule } from './common/database/database.module';
+import { S3Module } from './s3/s3.module';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
 
 @Module({
-  imports: [AuthModule, EchoModule, MediaModule, PlacesModule, AdminModule, DatabaseModule],
-  controllers: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    SeoulMeariModule,
+    SeoulMeariManageModule,
+    DatabaseModule,
+    S3Module,
+    RouterModule.register([
+      { path: 'api', module: SeoulMeariModule },
+      { path: 'manage', module: SeoulMeariManageModule },
+    ]),
+  ],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
